@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+/* eslint-disable quotes */
 
 'use strict';
 
