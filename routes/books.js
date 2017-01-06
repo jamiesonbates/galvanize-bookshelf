@@ -22,6 +22,10 @@ router.get('/books', (_req, res, next) => {
 
 // Read One Books
 router.get('/books/:id', (req, res, next) => {
+  if (!Number.parseFloat(req.params.id)) {
+    return next();
+  }
+
   knex('books')
     .where('id', req.params.id)
     .first()
@@ -40,7 +44,15 @@ router.get('/books/:id', (req, res, next) => {
 });
 
 router.post('/books', (req, res, next) => {
-  knex('books')
+  if (!req.body.title || !req.body.author || !req.body.genre || !req.body.description || !req.body.coverUrl) {
+    const err = new Error(400);
+
+    console.error(err.stack);
+
+    throw err;
+  }
+
+  return knex('books')
     .insert({
       title: req.body.title,
       author: req.body.author,
@@ -57,6 +69,9 @@ router.post('/books', (req, res, next) => {
 });
 
 router.patch('/books/:id', (req, res, next) => {
+  if (!Number.parseFloat(req.params.id) || !req.params.body) {
+    return next();
+  }
   knex('books')
     .where('id', req.params.id)
     .first()
@@ -84,6 +99,10 @@ router.patch('/books/:id', (req, res, next) => {
 });
 
 router.delete('/books/:id', (req, res, next) => {
+  if (!Number.parseFloat(req.params.id) || !req.params.body) {
+    return next();
+  }
+
   let book;
 
   knex('books')
