@@ -43,14 +43,43 @@ router.get('/books/:id', (req, res, next) => {
     });
 });
 
+// Create One Book
 router.post('/books', (req, res, next) => {
-  if (!req.body.title || !req.body.author || !req.body.genre || !req.body.description || !req.body.coverUrl) {
-    const err = new Error(400);
+  const keys = ['Title', 'Author', 'Genre', 'Description', 'Cover URL'];
+  const body = [req.body.title, req.body.author, req.body.genre, req.body.description, req.body.coverUrl];
 
-    console.error(err.stack);
+  for (const type of body) {
+    if (!type) {
+      const err = new Error(`${(keys[body.indexOf(type)])} must not be blank`);
 
-    throw err;
+      err.output = {statusCode: 400};
+
+      throw err;
+    }
   }
+  // const missing = function(type) {
+  //   const err = new Error(`${type} must not be blank`);
+  //
+  //   err.output = {statusCode: 400};
+  //
+  //   throw err;
+  // }
+  //
+  // if (!req.body.title) {
+  //   missing('Title');
+  // }
+  // else if (!req.body.author) {
+  //   missing('Author');
+  // }
+  // else if (!req.body.genre){
+  //   missing('Genre');
+  // }
+  // else if (!req.body.description) {
+  //   missing('Description');
+  // }
+  // else if (!req.body.coverUrl) {
+  //   missing('Cover URL');
+  // }
 
   return knex('books')
     .insert({
@@ -68,6 +97,8 @@ router.post('/books', (req, res, next) => {
     });
 });
 
+
+// Update One Book
 router.patch('/books/:id', (req, res, next) => {
   if (!Number.parseFloat(req.params.id) || !req.params.body) {
     return next();
@@ -98,6 +129,8 @@ router.patch('/books/:id', (req, res, next) => {
     })
 });
 
+
+// Delete One Book
 router.delete('/books/:id', (req, res, next) => {
   if (!Number.parseFloat(req.params.id) || !req.params.body) {
     return next();
