@@ -5,15 +5,16 @@
 const bcrypt = require('bcrypt-as-promised');
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 const knex = require('../knex');
 
-const {camelizeKeys, decamelizeKeys} = require('humps');
+const { camelizeKeys, decamelizeKeys } = require('humps');
 
 router.post('/users', (req, res, next) => {
   const throwError = function(message, code) {
     const err = new Error(message);
 
-    err.output = {statusCode: code};
+    err.output = { statusCode: code };
 
     return err;
   }
@@ -27,15 +28,15 @@ router.post('/users', (req, res, next) => {
   }
 
   knex('users')
-    .select('email')
     .where('email', req.body.email)
-    .asCallback((_err, rows) => {
-      if (rows[0].email) {
-        next(throwError('Email already exists', 400));
+    .first()
+    .then((row) => {
+      if (row) {
+        throw throwError('Email already exists', 400);
       }
-    });
 
-  bcrypt.hash(req.body.password, 12)
+      return bcrypt.hash(req.body.password, 12)
+    })
     .then((hashed_password) => {
       return knex('users')
         .insert({
@@ -46,10 +47,20 @@ router.post('/users', (req, res, next) => {
           }, '*');
     })
     .then((users) => {
-      console.log(users);
       const user = users[0];
 
+      const claim = { userId: user.id };
+      const token = jwt.sign(claim, process.env.JWT_KEY, {
+        expiresIn: '7 days'
+      });
+
       delete user.hashed_password;
+
+      res.cookie('token', token, {
+        httpOnly: true,
+        expires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+        secure: router.get('env') === 'production'
+      });
 
       res.send(camelizeKeys(user));
     })
